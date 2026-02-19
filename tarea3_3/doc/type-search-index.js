@@ -1,0 +1,1 @@
+typeSearchIndex = [{"l":"All Classes and Interfaces","u":"allclasses-index.html"},{"p":"clientes","l":"ClienteDNS"},{"p":"config","l":"DNSConfig"},{"p":"mainApp","l":"MainDNSServerApp"}];updateSearchResults();

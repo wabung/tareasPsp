@@ -1,0 +1,7 @@
+INDEX VERSION 1.134+C:\Users\Mario\2DAM\PSP\bloque3_sockets\.metadata\.plugins\org.eclipse.jdt.core
+2848366606.index
+1204338978.index
+1865797976.index
+818934196.index
+3651949697.index
+1787247274.index

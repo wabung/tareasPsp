@@ -1,0 +1,72 @@
+package workers;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+
+import conexion.Connection;
+
+public class LogicaServer implements Runnable {
+	private Connection conexion;
+
+	/**
+	 * Constructor del hilo
+	 * 
+	 * @param conexion
+	 */
+	public LogicaServer(Connection conexion) {
+		super();
+		this.conexion = conexion;
+	}
+
+	/**
+	 * Método runnable, obtendra la conexión del parámetro introducido y enviará al
+	 * cliente un mensaje.
+	 */
+	@Override
+	public void run() {
+		byte[] buffer = new byte[4096];
+		int bytesRecibidos = conexion.recibir(buffer);
+
+		if (bytesRecibidos > 0) {
+			try {
+				String cadena = new String(buffer, 0, bytesRecibidos).trim();
+				
+				System.out.println("Comando recibido: " + cadena);
+
+				if (cadena.startsWith("list")) {
+					
+				}
+				else if(cadena.equals("quit")){
+					byte[] respuesta = new String("OK").getBytes();
+					System.out.println("El cliente saldra del server");
+					conexion.enviar(respuesta, respuesta.length);
+					break;
+				}
+				else {
+					byte[] respuestaError = new String("KO").getBytes();
+					System.out.println("Comando no reconocido");
+					conexion.enviar(respuestaError, respuestaError.length);
+					break;
+				}
+				
+
+			} catch (Exception e) {
+				byte[] respuesta = new String("KO").getBytes();
+				System.out.println("Error");
+				conexion.enviar(respuesta, respuesta.length);
+			}
+			conexion.cerrar();
+		}
+	}
+
+}

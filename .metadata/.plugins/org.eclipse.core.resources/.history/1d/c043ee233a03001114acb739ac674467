@@ -1,0 +1,74 @@
+package clientes;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.Socket;
+import java.util.Scanner;
+
+import conexion.Connection;
+
+/**
+ * Aplicación de la terminal del cliente.
+ */
+public class MainComandoClientApp {
+
+	public static void main(String[] args) throws Exception {
+		Connection conexion;
+		// Dirección del servidor
+		String host = "localhost";
+		int puerto = 2121;
+		if (args.length == 1) {
+			host = args[0];
+		} else if (args.length == 2) {
+			host = args[0];
+			puerto = Integer.parseInt(args[1]);
+		}
+		
+		FileOutputStream salida = null;
+
+		// Crear el scanner
+		Scanner sc = new Scanner(System.in);
+
+		try {
+			while (true) {
+				// Obtener la linea escrita por el cliente
+				System.out.print("Comando: ");
+				String cadena = sc.nextLine();
+				
+				// Enviar la solicitud al servidor
+				conexion = new Connection(new Socket(host, puerto));
+				
+				byte[] rutaBytes = cadena.getBytes();
+				conexion.enviar(rutaBytes, rutaBytes.length);
+				
+				// Leer respuesta del servidor
+				byte[] respuestaBytes = new byte[4];
+				int longitudRespuesta = conexion.recibir(respuestaBytes);
+				
+				String respuesta = new String(respuestaBytes, 0, longitudRespuesta).trim();
+				
+				System.out.println("Respuesta: " + respuesta);
+				
+				if(respuesta.equals("OK")) {
+					System.out.println("Saliendo del servidor");
+					break;
+				}
+			}
+			
+	}
+	catch (Exception e) {
+		System.err.println("Error en la conexión.");
+	}
+		
+		sc.close();
+			
+		}
+	}
+

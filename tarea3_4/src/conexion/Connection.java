@@ -1,0 +1,99 @@
+package conexion;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
+
+/**
+ * Clase usada para las conexiones del cliente y servidor.
+ */
+public class Connection {
+
+	//Socket usado para la conexión
+	private Socket socket;
+	private PrintWriter salida;
+	private BufferedReader entrada;
+
+	public Connection(Socket socket) {
+		super();
+		this.socket = socket;
+		try {
+			this.salida = new PrintWriter(socket.getOutputStream(), true);
+			this.entrada = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+		} catch (IOException e) {
+			System.err.println("Error al crear flujos de entrada/salida");
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * Obtiene el socket de la conexión
+	 * @return socket
+	 */
+	public Socket getSocket() {
+		return socket;
+	}
+	
+	/**
+	 * Envia una cadena al otro extremo de la conexión
+	 * @param mensaje La cadena a enviar
+	 */
+	public void enviarCadena(String mensaje) {
+		if (socket.isConnected()) {
+			salida.println(mensaje);
+		} else {
+			System.err.println("Socket no conectado");
+		}
+	}
+	
+	/**
+	 * Recibe una cadena del otro extremo de la conexión
+	 * @return La cadena recibida, o null si hay error
+	 */
+	public String recibirCadena() {
+		StringBuilder cadena = new StringBuilder();
+		if (socket.isConnected()) {
+			try {
+				//Leer la primera línea
+				String linea = entrada.readLine();
+				if (linea != null) {
+					cadena.append(linea).append("\n");
+					
+					//Si la respuesta es OK, leer hasta encontrar una línea vacía
+					if (linea.equals("OK")) {
+						while ((linea = entrada.readLine()) != null) {
+							cadena.append(linea).append("\n");
+							if (linea.isEmpty()) {
+								break;
+							}
+						}
+					}
+				}
+				
+				return cadena.length() > 0 ? cadena.toString() : null;
+			} catch (Exception e) {
+				System.err.println("Error en la conexión al recibir datos.");
+				return null;
+			}
+		} else {
+			System.err.println("Socket no conectado");
+			return null;
+		}
+	}
+
+	
+	/**
+	 * Cierra la conexión
+	 */
+	public void cerrar() {
+		try {
+			if (entrada != null) entrada.close();
+			if (salida != null) salida.close();
+			if (socket != null) socket.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+}

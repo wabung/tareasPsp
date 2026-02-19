@@ -1,0 +1,1 @@
+typeSearchIndex = [{"l":"All Classes and Interfaces","u":"allclasses-index.html"},{"p":"conexion","l":"Connection"},{"p":"workers","l":"LogicaServer"},{"p":"clientes","l":"MainFileClientApp"},{"p":"mainApp","l":"MainFileServerApp"}];updateSearchResults();

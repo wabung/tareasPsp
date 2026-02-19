@@ -1,0 +1,194 @@
+package workers;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import conexion.Connection;
+
+public class LogicaServer implements Runnable {
+	private Connection conexion;
+
+	/**
+	 * Constructor del hilo
+	 * 
+	 * @param conexion
+	 */
+	public LogicaServer(Connection conexion) {
+		super();
+		this.conexion = conexion;
+	}
+
+	/**
+	 * Método runnable, obtiene la conexión del parámetro introducido y procesa
+	 * los comandos del cliente.
+	 */
+	@Override
+	public void run() {
+		try {
+			boolean continuar = true;
+			
+			while (continuar) {
+				String comando = conexion.recibirCadena();
+				
+				if (comando == null) {
+					break;
+				}
+				
+				comando = comando.trim();
+				System.out.println("Comando recibido: " + comando);
+
+				if (comando.startsWith("list ")) {
+					String ruta = comando.substring(5).trim();
+					procesarList(ruta);
+				}
+				else if (comando.startsWith("show ")) {
+					String ruta = comando.substring(5).trim();
+					procesarShow(ruta);
+				}
+				else if (comando.startsWith("delete ")) {
+					String ruta = comando.substring(7).trim();
+					procesarDelete(ruta);
+				}
+				else if(comando.equals("quit")){
+					System.out.println("El cliente saldrá del servidor");
+					conexion.enviarCadena("OK");
+					continuar = false;
+				}
+				else {
+					System.out.println("Comando no reconocido");
+					conexion.enviarCadena("KO");
+				}
+			}
+		} catch (Exception e) {
+			System.out.println("Error: " + e.getMessage());
+		} finally {
+			conexion.cerrar();
+		}
+	}
+	
+
+	
+	/**
+	 * Procesa el comando list
+	 * @param rutaUnix Ruta en formato Unix
+	 */
+	private void procesarList(String rutaUnix) {
+		try {
+			String rutaSistema = (rutaUnix);
+			File directorio = new File(rutaSistema);
+			
+			if (!directorio.exists()) {
+				conexion.enviarCadena("KO");
+				return;
+			}
+			
+			if (!directorio.isDirectory()) {
+				conexion.enviarCadena("KO");
+				return;
+			}
+			
+			File[] archivos = directorio.listFiles();
+			
+			if (archivos == null) {
+				conexion.enviarCadena("KO");
+				return;
+			}
+			
+			//Enviar OK
+			conexion.enviarCadena("OK");
+			
+			//Enviar cada archivo con su tamaño
+			for (File archivo : archivos) {
+				String nombre = archivo.getName();
+				long tamanoKiB;
+				
+				if (archivo.isDirectory()) {
+					tamanoKiB = 0;
+				} else {
+					tamanoKiB = archivo.length() / 1024;
+				}
+				
+				conexion.enviarCadena(nombre + " " + tamanoKiB);
+			}
+			
+			//Enviar línea vacía para indicar fin
+			conexion.enviarCadena("");
+			
+		} catch (Exception e) {
+			conexion.enviarCadena("KO");
+		}
+	}
+	
+	/**
+	 * Procesa el comando show
+	 * @param rutaUnix Ruta en formato Unix
+	 */
+	private void procesarShow(String rutaUnix) {
+		try {
+			String rutaSistema = (rutaUnix);
+			File archivo = new File(rutaSistema);
+			
+			if (!archivo.exists() || !archivo.isFile()) {
+				conexion.enviarCadena("KO");
+				return;
+			}
+			
+			//Leer el archivo completo
+			BufferedReader reader = new BufferedReader(new FileReader(archivo));
+			StringBuilder contenido = new StringBuilder();
+			String linea;
+			int numeroLineas = 0;
+			
+			while ((linea = reader.readLine()) != null) {
+				contenido.append(linea).append("\n");
+				numeroLineas++;
+			}
+			reader.close();
+			
+			//Enviar OK
+			conexion.enviarCadena("OK");
+			//Enviar número de líneas
+			conexion.enviarCadena(String.valueOf(numeroLineas));
+			//Enviar contenido
+			conexion.enviarCadena(contenido.toString());
+			//Enviar línea vacía para indicar fin
+			conexion.enviarCadena("");
+			
+		} catch (Exception e) {
+			conexion.enviarCadena("KO");
+		}
+	}
+	
+	/**
+	 * Procesa el comando delete
+	 * @param rutaUnix Ruta en formato Unix
+	 */
+	private void procesarDelete(String rutaUnix) {
+		try {
+			String rutaSistema = (rutaUnix);
+			Path path = Paths.get(rutaSistema);
+			
+			if (!Files.exists(path)) {
+				conexion.enviarCadena("KO");
+				return;
+			}
+			
+			//Intentar eliminar
+			boolean eliminado = Files.deleteIfExists(path);
+			
+			if (eliminado) {
+				conexion.enviarCadena("OK");
+			} else {
+				conexion.enviarCadena("KO");
+			}
+			
+		} catch (Exception e) {
+			//Si es un directorio no vacío o no se puede eliminar
+			conexion.enviarCadena("KO");
+		}
+	}
+}
